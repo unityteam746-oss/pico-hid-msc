@@ -1,0 +1,29 @@
+name: Build Pico Firmware
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      run: git clone https://github.com/${{ github.repository }}.git src && cd src
+    
+    - name: Install dependencies
+      run: |
+        sudo apt update
+        sudo apt install -y cmake gcc-arm-none-eabi git python3
+        
+    - name: Build firmware
+      run: |
+        cd src
+        git clone https://github.com/raspberrypi/pico-sdk
+        cd pico-sdk
+        git submodule update --init
+        cd ..
+        mkdir build
+        cd build
+        cmake ..
+        make
+        ls -la *.uf2
+        echo "=== BUILD SUCCESSFUL ==="
