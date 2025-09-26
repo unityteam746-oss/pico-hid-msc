@@ -7,23 +7,33 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout code
-      run: git clone https://github.com/${{ github.repository }}.git src && cd src
+      uses: actions/checkout@v4
     
     - name: Install dependencies
       run: |
         sudo apt update
         sudo apt install -y cmake gcc-arm-none-eabi git python3
         
-    - name: Build firmware
+    - name: Clone and setup Pico SDK
       run: |
-        cd src
         git clone https://github.com/raspberrypi/pico-sdk
         cd pico-sdk
         git submodule update --init
         cd ..
+        
+    - name: Build firmware
+      run: |
+        # Set the PICO_SDK_PATH environment variable
+        export PICO_SDK_PATH=$(pwd)/pico-sdk
+        echo "PICO_SDK_PATH set to: $PICO_SDK_PATH"
+        
         mkdir build
         cd build
-        cmake ..
+        cmake -DPICO_SDK_PATH=$PICO_SDK_PATH ..
         make
-        ls -la *.uf2
-        echo "=== BUILD SUCCESSFUL ==="
+        
+    - name: Upload UF2 file
+      uses: actions/upload-artifact@v4
+      with:
+        name: pico-firmware
+        path: build/*.uf2
